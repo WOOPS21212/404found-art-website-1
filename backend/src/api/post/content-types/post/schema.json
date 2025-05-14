@@ -1,0 +1,104 @@
+{
+  "kind": "collectionType",
+  "collectionName": "posts",
+  "info": {
+    "singularName": "post",
+    "pluralName": "posts",
+    "displayName": "Post",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "description": {
+      "type": "text"
+    },
+    "publicationDate": {
+      "type": "datetime"
+    },
+    "slug": {
+      "type": "string",
+      "required": true
+    },
+    "featuredImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "postType": {
+      "type": "enumeration",
+      "enum": [
+        "standard",
+        "video",
+        "gif",
+        "gallery"
+      ],
+      "required": true
+    },
+    "isFeatured": {
+      "type": "boolean"
+    },
+    "videoURL": {
+      "type": "string"
+    },
+    "videoProvider": {
+      "type": "enumeration",
+      "enum": [
+        "vimeo",
+        "self-hosted"
+      ]
+    },
+    "disableAutoplay": {
+      "type": "boolean",
+      "default": false
+    },
+    "disableLoop": {
+      "type": "boolean",
+      "default": false
+    },
+    "gifURL": {
+      "type": "string"
+    },
+    "gifProvider": {
+      "type": "enumeration",
+      "enum": [
+        "imgur",
+        "self-hosted"
+      ]
+    },
+    "autoPlay": {
+      "type": "boolean"
+    },
+    "galleryImages": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "content": {
+      "type": "blocks"
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category",
+      "inversedBy": "posts"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -11,9 +11,7 @@ node_modules/
 # Testing
 coverage/
 
-# Production
-build/
-dist/
+# Production build
 .next/
 out/
 
@@ -21,7 +19,7 @@ out/
 .env
 .env.*
 !.env.example
-*.env
+!.env.local
 config/secrets.*
 credentials.json
 service-account.json
@@ -33,8 +31,6 @@ google-credentials.json
 .vscode/
 *.swp
 *.swo
-*.swn
-*.swm
 .DS_Store
 Thumbs.db
 
@@ -43,11 +39,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-*.log
 
 # Build artifacts
 *.tsbuildinfo
-next-env.d.ts
 .eslintcache
 
 # Temporary files
@@ -55,35 +49,19 @@ next-env.d.ts
 *.temp
 .cache/
 
-# Media and Content Files
-backend/public/uploads/*
-!backend/public/uploads/.gitkeep
-frontend/public/uploads/*
-!frontend/public/uploads/.gitkeep
-**/uploads/*
-!**/uploads/.gitkeep
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
-*.mp4
-*.webm
-*.mov
-*.avi
-*.wmv
-*.flv
-*.mkv
-*.pdf
-*.doc
-*.docx
-*.xls
-*.xlsx
+# Large media files
+backend/public/uploads/*.mp4
+backend/public/uploads/*.mov
+backend/public/uploads/*.webm
+backend/public/uploads/*.avi
+backend/public/uploads/*.flv
+backend/public/uploads/*.wmv
 
 # Database files
 *.sqlite
 *.sqlite3
 *.db
+.tmp/data.db
 
 # System Files
 .DS_Store
@@ -92,4 +70,4 @@ frontend/public/uploads/*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
