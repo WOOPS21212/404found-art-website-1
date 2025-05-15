@@ -1,4 +1,5 @@
 import { PostType } from '@/components/grid/PostCard';
+import { Post } from '@/types/post';
 
 export interface StrapiMedia {
   id: number;
@@ -302,3 +303,230 @@ class StrapiAPI {
 }
 
 export const strapiAPI = new StrapiAPI();
+
+export async function getSinglePost(slug: string): Promise<Post | null> {
+  if (!slug) {
+    console.error('Invalid slug provided to getSinglePost:', slug);
+    return null;
+  }
+
+  try {
+    console.log('getSinglePost: Making API request with slug:', slug);
+    // Ensure we're using the correct API URL
+    // NEXT_PUBLIC_STRAPI_API_URL should be 'http://localhost:1337/api'
+    const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337/api'}/posts?filters[slug][$eq]=${slug}&populate=*`;
+    console.log('getSinglePost URL:', url);
+    
+    const response = await fetch(url, {
+      next: { revalidate: 60 }, // Revalidate every 60 seconds
+    });
+    
+    console.log('getSinglePost response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch post: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('getSinglePost response data:', JSON.stringify(data).substring(0, 200) + '...');
+    
+    // Check if we have valid data
+    if (data && data.data && data.data.length > 0) {
+      // Return formatted post data
+      console.log('getSinglePost: Post found, formatting data');
+      return formatPost(data.data[0]);
+    }
+    
+    console.error('No post found with slug:', slug);
+    return null;
+  } catch (error) {
+    console.error('Error fetching single post:', error);
+    return null;
+  }
+}
+
+/**
+ * Generates a URL-friendly slug from a title
+ * @param title The title to convert to a slug
+ * @param id The post ID to use as fallback
+ * @returns A URL-friendly slug
+ */
+export function generateSlug(title: string | undefined, id: string | number): string {
+  if (!title) return `post-${id}`;
+  
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim(); // Trim leading/trailing spaces
+}
+
+// Helper function to format the post data from Strapi
+function formatPost(post: any): Post {
+  // Check if the data is in the expected Strapi API format
+  if (post && post.attributes) {
+    // Standard API response format
+    const attributes = post.attributes;
+    
+    // Use the slug from Strapi if it exists, otherwise generate one
+    const slug = attributes.slug || generateSlug(attributes.title, post.id);
+
+    return {
+      id: post.id,
+      title: attributes.title || 'Untitled',
+      slug: slug,
+      description: attributes.description,
+      content: attributes.content,
+      featuredImage: attributes.featuredImage?.data
+        ? {
+            url: attributes.featuredImage.data.attributes.url,
+            alt: attributes.featuredImage.data.attributes.alternativeText || attributes.title,
+          }
+        : null,
+      createdAt: attributes.createdAt,
+      updatedAt: attributes.updatedAt,
+    };
+  } 
+  // Check if this is a direct post object (with no nested attributes)
+  else if (post && post.id && typeof post.id !== 'undefined') {
+    // Direct post object format
+    const slug = post.slug || generateSlug(post.title, post.id);
+    
+    return {
+      id: post.id.toString(),
+      title: post.title || 'Untitled',
+      slug: slug,
+      description: post.description || '',
+      content: post.content,
+      featuredImage: post.featuredImage
+        ? {
+            url: STRAPI_URL + post.featuredImage.url,
+            alt: post.featuredImage.alternativeText || post.title || '',
+          }
+        : null,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+    };
+  }
+  
+  // Default case for invalid data
+  console.error('Invalid post data received:', post);
+  return {
+    id: '0',
+    title: 'Error: Invalid post data',
+    slug: 'error-invalid-post',
+    description: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Fetches a post by its ID using the collection endpoint as a fallback
+ * @param id The post ID to fetch
+ * @returns The formatted post or null if not found
+ */
+export async function getPostById(id: string | number): Promise<Post | null> {
+  if (!id) {
+    console.error('Invalid ID provided to getPostById');
+    return null;
+  }
+
+  try {
+    // Use the filter approach which is more reliable
+    const url = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/posts?filters[id][$eq]=${id}&populate=*`;
+    console.log('Fetching post by ID URL:', url);
+
+    const response = await fetch(url, {
+      next: { revalidate: 60 }, // Revalidate every 60 seconds
+    });
+    
+    // Log status for debugging
+    console.log('Response status:', response.status);
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch post by ID ${id}. Status: ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Collection endpoint returns an array, so we need the first item
+    if (data && data.data && data.data.length > 0) {
+      console.log('Post found by ID:', id);
+      return formatPost(data.data[0]);
+    }
+    
+    console.error('No post found with ID:', id);
+    return null;
+  } catch (error) {
+    console.error('Error fetching post by ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Debug function to verify Strapi API configuration and structure
+ */
+export async function debugStrapiApi(): Promise<string> {
+  try {
+    // Get the API info
+    const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}`);
+    const data = await response.json();
+    console.log('Strapi API structure:', data);
+    
+    // Try to get all posts to verify endpoint
+    const postsResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/posts?populate=*`);
+    const postsData = await postsResponse.json();
+    console.log('Posts response structure:', postsData);
+    
+    if (postsData && postsData.data && postsData.data.length > 0) {
+      const firstPostId = postsData.data[0].id;
+      console.log('First post ID:', firstPostId);
+      
+      // Try to get this specific post
+      const singlePostResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/posts/${firstPostId}?populate=*`);
+      console.log('Single post status:', singlePostResponse.status);
+      
+      if (singlePostResponse.ok) {
+        const singlePostData = await singlePostResponse.json();
+        console.log('Single post structure:', singlePostData);
+      }
+    }
+    
+    return 'Debug complete. Check console for results.';
+  } catch (error) {
+    console.error('Error debugging Strapi API:', error);
+    return `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
+/**
+ * Utility function to verify Strapi configuration and permissions
+ */
+export async function verifyStrapiConfig(): Promise<string> {
+  try {
+    console.log('NEXT_PUBLIC_STRAPI_API_URL:', process.env.NEXT_PUBLIC_STRAPI_API_URL);
+    
+    // Check if we can access the API at all
+    const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/posts?populate=*`);
+    
+    if (!response.ok) {
+      console.error('Cannot access Strapi API. Status:', response.status);
+      
+      // Try without the /api prefix as a fallback (some setups might be different)
+      const altResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/posts?populate=*`);
+      if (altResponse.ok) {
+        console.log('API accessible without /api prefix. Your NEXT_PUBLIC_STRAPI_API_URL might need adjustment');
+      }
+    } else {
+      console.log('Successfully accessed Strapi API!');
+    }
+    
+    return 'Verification complete. Check console for results.';
+  } catch (error) {
+    console.error('Error verifying Strapi config:', error);
+    return `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
