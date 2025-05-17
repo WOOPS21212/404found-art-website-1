@@ -5,7 +5,6 @@ import { PostCard, PostType } from '@/components/grid/PostCard';
 import ThemeSwitcher from '@/components/theme/ThemeSwitcher';
 import { usePosts } from '@/hooks/usePosts';
 import { useDebounce } from '@/hooks/useDebounce';
-import Link from 'next/link';
 import { useTheme } from '@/context/ThemeContext';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,20 +94,12 @@ export default function HomePage() {
     <main className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-12">
-          <h1 className={`text-4xl font-bold ${
+          <h1 className={`text-4xl font-bold post-title ${
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>
             404 Found Art
           </h1>
-          <div className="flex items-center space-x-4">
-            <Link 
-              href="/admin/theme" 
-              className={buttonBaseClasses}
-            >
-              Theme Settings
-            </Link>
-            <ThemeSwitcher />
-          </div>
+          <ThemeSwitcher />
         </div>
 
         <div className="mb-8 space-y-4">
@@ -163,7 +154,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        
+
         {error && (
           <div className="mb-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             <p>Error loading posts: {error.message}</p>
@@ -214,6 +205,7 @@ export default function HomePage() {
                     type={post.type}
                     mediaUrl={post.mediaUrl}
                     mediaAlt={post.mediaAlt}
+                    slug={post.slug || `post-${post.id}`}
                   />
                 ))}
               </MasonryGrid>

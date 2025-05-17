@@ -12,6 +12,7 @@ interface Post {
   mediaAlt: string;
   createdAt: string;
   updatedAt: string;
+  slug?: string; // Added slug property
 }
 
 interface UsePostsOptions {

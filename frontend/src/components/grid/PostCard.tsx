@@ -300,7 +300,7 @@ export function PostCard({
           }`}
         >
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-lg font-semibold mb-1">{title}</h3>
+            <h3 className="text-lg font-semibold mb-1 post-title">{title}</h3>
             {description && (
               <p className="text-sm opacity-90 line-clamp-2">{description}</p>
             )}
